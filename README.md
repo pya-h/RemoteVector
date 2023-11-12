@@ -15,14 +15,16 @@ Client app will send th expression and receives the result
     result will be a dimension n vecor as (v1, v2, v3, v4)
 
     * vector components can also be a vector themselves (like matix), like:
-    > x = 1 2
-    > y = -1 -2
-    > q = x y
+        > x = 1 2
+
+        > y = -1 -2
+        
+        > q = x y
 
 * Using variables in vector definition:
-> x = 2
-> y = 1
-> q = x y
+    > x = 2
+    > y = 1
+    > q = x y
 * Define variable resulted from an expression
     > x = v1 + v2 * v3 @ v4 ...
 * Print variabke/Vector Value:
