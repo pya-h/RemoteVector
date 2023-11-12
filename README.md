@@ -30,7 +30,7 @@ Client app will send th expression and receives the result
 
 * Define variable resulted from an expression
     > x = v1 + v2 * v3 @ v4 ...
-    
+
 * Print variabke/Vector Value:
     Just write the name and hit enter, like:
     v1
@@ -38,7 +38,7 @@ Client app will send th expression and receives the result
     Addition: '+'
     Substraction: '-'
     Multiplication: '*'
-    Division: '@'
+    Inner Multiplication (.): '@'
     Length or Abs: '|'
     Division: '/'
 
