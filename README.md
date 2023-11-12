@@ -23,10 +23,14 @@ Client app will send th expression and receives the result
 
 * Using variables in vector definition:
     > x = 2
+
     > y = 1
+
     > q = x y
+
 * Define variable resulted from an expression
     > x = v1 + v2 * v3 @ v4 ...
+    
 * Print variabke/Vector Value:
     Just write the name and hit enter, like:
     v1
