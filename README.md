@@ -18,14 +18,16 @@ Client app will send th expression and receives the result
     x = 1 2
     y = -1 -2
     q = x y
-    
+
 * Using variables in vector definition:
     x = 2
     y = 1
     q = x y
 * Define variable resulted from an expression
     x = v1 + v2 * v3 @ v4 ...
-
+* Print variabke/Vector Value:
+    Just write the name and hit enter, like:
+    v1
 # Operators:
     'add': '+'
     'sub': '-'
@@ -33,3 +35,7 @@ Client app will send th expression and receives the result
     'dot': '@'
     'abs': '|'
     'div': '/'
+
+# Run:
+Set your server configs, in config.py and then run it by: python3 server.py
+Then open any number of clients you need with: python client.py

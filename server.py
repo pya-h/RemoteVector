@@ -91,38 +91,37 @@ class SocketServer:
                 #    raise ValueError("The statement you\'ve entered is not valid! try again...")
                 result = 0
                 count = len(params)
-                if count >= 3:
-                    if params[1] == '=':
-                        if is_number(params[0]):
-                            raise SyntaxError("Variable name can not be a number!")
-                        elif params[0][0] == OPERATORS['abs'] and params[0][-1] == OPERATORS['abs']:
-                            raise SystemError('| | is an operator, variable name shouldnt be within that!')
-                        if count > 3:
-                            comps = []
-                            rhs = params[2:]
-                            if not contains_operator(rhs):
-                                # TODO: rewrite this to combine calculations and defining together
-                                for x in rhs:
-                                    if x in mem:
-                                        comps.append(mem[x])
-                                    elif is_number(x):
-                                        comps.append(float(x) if '.' in x else int(x))
-                                    else:
-                                        raise ValueError(f"Unknown value:{x} !")
-                                mem[params[0]] = VectorND(*comps)
-                            else:
-                                mem[params[0]] = SocketServer.calculate_expression(memory=mem, params=rhs)
+                
+                if count >= 3 and params[1] == '=':
+                    if is_number(params[0]):
+                        raise SyntaxError("Variable name can not be a number!")
+                    elif params[0][0] == OPERATORS['abs'] and params[0][-1] == OPERATORS['abs']:
+                        raise SystemError('| | is an operator, variable name shouldnt be within that!')
+                    if count > 3:
+                        comps = []
+                        rhs = params[2:]
+                        if not contains_operator(rhs):
+                            # TODO: rewrite this to combine calculations and defining together
+                            for x in rhs:
+                                if x in mem:
+                                    comps.append(mem[x])
+                                elif is_number(x):
+                                    comps.append(float(x) if '.' in x else int(x))
+                                else:
+                                    raise ValueError(f"Unknown value:{x} !")
+                            mem[params[0]] = VectorND(*comps)
                         else:
-                            try:
-                                mem[params[0]] = int(params[2])
-                            except:
-                                mem[params[0]] = float(params[2])
-                                
-                        result = f"{params[0]} = {mem[params[0]]}"
+                            mem[params[0]] = SocketServer.calculate_expression(memory=mem, params=rhs)
                     else:
-                        result = SocketServer.calculate_expression(mem, params)
+                        try:
+                            mem[params[0]] = int(params[2])
+                        except:
+                            mem[params[0]] = float(params[2])
+                            
+                    result = f"{params[0]} = {mem[params[0]]}"
                 else:
-                    pass
+                    result = SocketServer.calculate_expression(mem, params)
+
                 client_socket.send(bytes(str(result), 'utf-8'))
             except Exception as e:
                 print(e)
