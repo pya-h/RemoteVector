@@ -5,8 +5,6 @@ pub mod vector {
         name: String,
     }
 
-    static mut memory: Vec<Vector> = Vec::new();
-
     macro_rules! V {
             ($($x:expr), *) => {
                 {
@@ -20,11 +18,11 @@ pub mod vector {
     }
 
     impl Vector {
-        fn define(name: &String, v: Vec<f64>) {
-            memory.push(Vector {
+        fn new(name: &String, v: Vec<f64>) -> Vector {
+            Vector {
                 components: v,
                 name: name.clone(),
-            });
+            }
         }
 
         fn zero(dimension: usize) -> Vector {
