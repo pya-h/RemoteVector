@@ -24,14 +24,14 @@ pub mod vector {
             }
         }
 
-        fn zero(dimension: usize) -> Vector {
+        pub fn zero(dimension: usize) -> Vector {
             Vector {
                 name: "nothing".to_string(),
                 components: vec![0.0; dimension],
             }
         }
 
-        fn ones(dimension: usize) -> Vector {
+        pub fn ones(dimension: usize) -> Vector {
             Vector {
                 name: "nothing".to_string(),
                 components: vec![1.0; dimension],
@@ -46,13 +46,27 @@ pub mod vector {
             v.components[one_index - 1] = 1.0;
             Some(v)
         }
-
-        fn add(&self, v: Vector) -> Option<Vector> {
-            let u = Vector::zero(self.components.len());
-
+        
+        pub fn plus_cv(&self, v: &Vector, c: f64) -> Option<Vector> {
+            let n = self.components.len();
+            if n != v.components.len() {
+                return None;
+            }
+            let mut u: Vector = Vector::zero(n);
+            for i in 0..n {
+                u.components[i] = self.components[i] + c * v.components[i];
+            }
             Some(u)
         }
 
+        pub fn add(&self, v: &Vector) -> Option<Vector> {
+           self.plus_cv(v, 1.0)
+        }
+
+        pub fn sub(&self, v: &Vector) -> Option<Vector> {
+            self.plus_cv(v, -1.0)
+        }
+    
         pub fn update(&mut self, new_components: Vec<f64>) {
             self.components = new_components;
         }
