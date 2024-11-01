@@ -1,4 +1,7 @@
 pub mod vector {
+
+    use crate::calculus::matrix::matrix::Matrix;
+
     #[derive(Clone)]
     pub struct Vector {
         components: Vec<f64>,
@@ -47,7 +50,7 @@ pub mod vector {
             v.components[one_index - 1] = 1.0;
             Some(v)
         }
-        
+
         pub fn plus_cv(&self, v: &Vector, c: f64) -> Option<Vector> {
             let n = self.components.len();
             if n != v.components.len() {
@@ -57,17 +60,31 @@ pub mod vector {
             for i in 0..n {
                 u.components[i] = self.components[i] + c * v.components[i];
             }
+            u.name = format!(
+                "{}{}{}",
+                self.name,
+                if c != 1.0 {
+                    if c != -1.0 {
+                        String::from(" + ") + &c.to_string()
+                    } else {
+                        String::from(" - ")
+                    }
+                } else {
+                    String::from(" + ")
+                },
+                v.name
+            );
             Some(u)
         }
 
         pub fn add(&self, v: &Vector) -> Option<Vector> {
-           self.plus_cv(v, 1.0)
+            self.plus_cv(v, 1.0)
         }
 
         pub fn sub(&self, v: &Vector) -> Option<Vector> {
             self.plus_cv(v, -1.0)
         }
-    
+
         pub fn dot(&self, v: &Vector) -> Option<Vector> {
             let n = self.components.len();
             if n != v.components.len() {
@@ -77,13 +94,41 @@ pub mod vector {
             for i in 0..n {
                 u.components[i] = self.components[i] * v.components[i];
             }
+            u.name = format!("{} . {}", self.name, v.name);
             Some(u)
+        }
+
+        pub fn cross(&self, v: &Vector) -> Matrix {
+            let mut outer_product: Matrix =
+                Matrix::new(&format!("{} x {}", self.name, v.name), Vec::new());
+            for x in &self.components {
+                outer_product.extend(&v.map(*x, 0.0))
+            }
+            outer_product
         }
 
         pub fn map(&self, multiply_by: f64, increment_by: f64) -> Vector {
             let mut u: Vector = Vector::zero(self.components.len());
+            u.name = format!(
+                "{}{}{}",
+                if multiply_by != 1.0 {
+                    if multiply_by != -1.0 {
+                        multiply_by.to_string()
+                    } else {
+                        String::from("-")
+                    }
+                } else {
+                    String::from("")
+                },
+                self.name,
+                if increment_by != 0.0 {
+                    format!("+ {}", increment_by)
+                } else {
+                    String::from("")
+                }
+            );
             for (i, &xi) in self.components.iter().enumerate() {
-                u.components[i] = multiply_by*xi + increment_by;
+                u.components[i] = multiply_by * xi + increment_by;
             }
             u
         }
@@ -92,14 +137,14 @@ pub mod vector {
             self.components = new_components;
         }
 
-        pub fn to_string(&self) -> String {
-            let mut representation: String = String::from("(");
+        pub fn as_row(&self) -> String {
+            let mut representation: String = String::new();
 
             for xi in &self.components {
                 representation = format!(
                     "{}{}{}",
                     representation,
-                    if representation == "(" { "" } else { ", " },
+                    if representation.is_empty() { "" } else { ", " },
                     if xi.fract() != 0.0 {
                         xi.to_string()
                     } else {
@@ -107,7 +152,15 @@ pub mod vector {
                     }
                 )
             }
-            representation + ")"
+            representation
+        }
+
+        pub fn to_string(&self) -> String {
+            format!("({})", self.as_row())
+        }
+
+        pub fn definition_string(&self) -> String {
+            format!("{} = {}", self.name, self.to_string())
         }
 
         pub fn clone(&self) -> Self {
