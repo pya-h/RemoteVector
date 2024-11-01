@@ -1,6 +1,6 @@
 pub mod memory;
 pub mod vector;
-
+pub mod matrix;
 pub struct Analyzer {
     memory: memory::Memory,
 }

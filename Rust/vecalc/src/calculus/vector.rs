@@ -1,4 +1,5 @@
 pub mod vector {
+    #[derive(Clone)]
     pub struct Vector {
         components: Vec<f64>,
         name: String,
@@ -38,7 +39,7 @@ pub mod vector {
             }
         }
 
-        fn eye(one_index: usize, dimension: usize) -> Option<Vector> {
+        pub fn eye(one_index: usize, dimension: usize) -> Option<Vector> {
             if one_index > dimension {
                 return None;
             }
@@ -67,6 +68,26 @@ pub mod vector {
             self.plus_cv(v, -1.0)
         }
     
+        pub fn dot(&self, v: &Vector) -> Option<Vector> {
+            let n = self.components.len();
+            if n != v.components.len() {
+                return None;
+            }
+            let mut u: Vector = Vector::zero(n);
+            for i in 0..n {
+                u.components[i] = self.components[i] * v.components[i];
+            }
+            Some(u)
+        }
+
+        pub fn map(&self, multiply_by: f64, increment_by: f64) -> Vector {
+            let mut u: Vector = Vector::zero(self.components.len());
+            for (i, &xi) in self.components.iter().enumerate() {
+                u.components[i] = multiply_by*xi + increment_by;
+            }
+            u
+        }
+
         pub fn update(&mut self, new_components: Vec<f64>) {
             self.components = new_components;
         }
@@ -87,6 +108,10 @@ pub mod vector {
                 )
             }
             representation + ")"
+        }
+
+        pub fn clone(&self) -> Self {
+            Vector::new(&format!("{}_copy", self.name), self.components.clone())
         }
     }
 
