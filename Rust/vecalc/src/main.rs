@@ -6,11 +6,9 @@ fn main() {
     main_scope.define_vector("v".to_string(), vec![1.2, 2.6, 2.3, 4.5]);
     main_scope.define_vector("u".to_string(), vec![1.0, 2.0, 2.0, 4.0]);
 
-    let new_v = main_scope.get(&"v".to_string());
-    if let Some(v) = new_v {
-        let new_u = main_scope.get(&"u".to_string());
+    if let Some(v) = main_scope.get(&"v".to_string()) {
 
-        if let Some(u) = new_u {
+        if let Some(u) = main_scope.get(&"u".to_string()) {
             println!(
                 "{}",
                 match v.add(u) {

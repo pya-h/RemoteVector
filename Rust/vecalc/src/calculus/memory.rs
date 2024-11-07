@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::vector::vector::Vector;
+use super::vector::Vector;
 
 pub struct Scope {
     vectors: HashMap<String, Vector>,
