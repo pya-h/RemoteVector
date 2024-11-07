@@ -83,7 +83,19 @@ impl Vector {
         self.plus_cv(v, -1.0)
     }
 
-    pub fn dot(&self, v: &Vector) -> Option<Vector> {
+    pub fn dot(&self, v: &Vector) -> Option<f64> {
+        let n = self.components.len();
+        if n != v.components.len() {
+            return None;
+        }
+        let mut u: f64 = 0.0;
+        for i in 0..n {
+            u += self.components[i] * v.components[i];
+        }
+        Some(u)
+    }
+
+    pub fn multiply(&self, v: &Vector) -> Option<Vector> {
         let n = self.components.len();
         if n != v.components.len() {
             return None;
@@ -92,7 +104,7 @@ impl Vector {
         for i in 0..n {
             u.components[i] = self.components[i] * v.components[i];
         }
-        u.name = format!("{} . {}", self.name, v.name);
+        u.name = format!("{} * 1{}", self.name, v.name);
         Some(u)
     }
 
