@@ -36,7 +36,7 @@ fn main() {
             println!(
                 "{}",
                 match v.dot(u) {
-                    Some(z) => z.definition_string(),
+                    Some(z) => z.to_string(),
                     None => "Vector inner product failed because of dimension mismatch".to_string(),
                 }
             );
