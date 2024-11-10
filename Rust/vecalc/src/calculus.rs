@@ -1,13 +1,13 @@
+pub mod matrix;
 pub mod memory;
 pub mod vector;
-pub mod matrix;
 pub enum Token {
     Vector(vector::Vector),
     Matrix(matrix::Matrix),
     Scalar(f64),
     Operator(String),
     Null,
-    Wtf(String)
+    Wtf(String),
 }
 pub struct Analyzer {
     memory: memory::Memory,
@@ -24,49 +24,68 @@ impl Analyzer {
         &mut self.memory
     }
 
-    fn evaluate(str_tokens: Vec<&str>) -> Token {
-        let mut lhs: Vec<Token>  = Vec::new();
-        let mut rhs: Vec<Token> = Vec::new();
+    pub fn analyze(&mut self, instruction: &String, scope: &String) {
+        let tokens: Vec<&str> = instruction.split_whitespace().collect();
 
+        let mut lhs: Vec<Token> = Vec::new();
+        let mut rhs: Vec<Token> = Vec::new();
+        let mut passed_equal: bool = false;
         let mut reading_vector: bool = false;
-        let mut vector_elements: Vec<f64>;
-        for tk in str_tokens {
+        let mut vector_elements: Vec<f64> = Vec::new();
+        
+        for tk in tokens {
             match tk {
                 "(" => {
                     reading_vector = true;
-                    vector_elements = Vec::new();
-                },
+                    vector_elements.clear();
+                }
                 "[" => {
                     // TODO: extract matrix
-                },
+                }
                 ")" => {
-                    if reading_vector {
-                        vector::Vector v = vector::Vector::new(St0ing::from("#inline-temp"), vector_elements);
-                        rhs.push(value);
+                    if reading_vector && vector_elements.len() > 0 {
+                        let v: vector::Vector =
+                            vector::Vector::new(&String::from("#inline-temp"), vector_elements.clone());
+                        if passed_equal {
+                            rhs.push(Token::Vector(v));
+                        } else {
+                            lhs.push(Token::Vector(v));
+                        }
                         reading_vector = false;
                     } else {
                         // parenthesis or error
                     }
-                },
+                }
+                "=" => {
+                    passed_equal = true;
+                    continue;
+                }
+                "+" | "-" | "." | "*" | "x" => {
+                    if passed_equal {
+                        rhs.push(Token::Operator(tk.to_string()));
+                    } else {
+                        lhs.push(Token::Operator(tk.to_string()));
+                    } 
+                }
                 _ => {
-                    // TODO: probably a pre-defined vector
+                    match tk.parse::<f64>() {
+                        Ok(v) => {
+                            if passed_equal {
+                                rhs.push(Token::Scalar(v));
+                            } else {
+                                lhs.push(Token::Scalar(v));
+                            }
+                        }
+                        Err(_) => {
+                            let v = self.get().get(scope).get(&tk.to_string());
+                        }
+                    }
                 }
             }
 
             if reading_vector {
                 let value: f64 = tk.parse().unwrap();
                 vector_elements.push(value);
-            }
-        }
-        Token::Null
-    }
-    pub fn analyze(instruction: &String) {
-        let tokens: Vec<&str> = instruction.split_whitespace().collect();
-        let terms_count: usize = tokens.len();
-
-        if terms_count > 2 {
-            if tokens[1] == "=" {
-
             }
         }
     }

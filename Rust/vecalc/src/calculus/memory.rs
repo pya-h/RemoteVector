@@ -38,7 +38,7 @@ impl Memory {
         }
     }
 
-    pub fn get(&mut self, scope: String) -> &mut Scope {
+    pub fn get(&mut self, scope: &String) -> &mut Scope {
         self.scopes
             .entry(scope.clone())
             .or_insert(Scope::new(&scope))
