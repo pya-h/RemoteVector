@@ -34,58 +34,91 @@ impl Analyzer {
         let mut vector_elements: Vec<f64> = Vec::new();
         
         for tk in tokens {
-            match tk {
-                "(" => {
-                    reading_vector = true;
-                    vector_elements.clear();
-                }
-                "[" => {
-                    // TODO: extract matrix
-                }
-                ")" => {
-                    if reading_vector && vector_elements.len() > 0 {
-                        let v: vector::Vector =
-                            vector::Vector::new(&String::from("#inline-temp"), vector_elements.clone());
-                        if passed_equal {
-                            rhs.push(Token::Vector(v));
-                        } else {
-                            lhs.push(Token::Vector(v));
-                        }
-                        reading_vector = false;
-                    } else {
-                        // parenthesis or error
-                    }
-                }
-                "=" => {
-                    passed_equal = true;
-                    continue;
-                }
-                "+" | "-" | "." | "*" | "x" => {
-                    if passed_equal {
-                        rhs.push(Token::Operator(tk.to_string()));
-                    } else {
-                        lhs.push(Token::Operator(tk.to_string()));
-                    } 
-                }
-                _ => {
-                    match tk.parse::<f64>() {
-                        Ok(v) => {
+            if reading_vector {
+                let value: f64 = tk.parse().unwrap();
+                vector_elements.push(value);
+            } else {
+                match tk {
+                    "(" => {
+                        reading_vector = true;
+                        vector_elements.clear();
+                    },
+                    "[" => {
+                        // TODO: extract matrix
+                    },
+                    ")" => {
+                        if reading_vector && vector_elements.len() > 0 {
+                            let v: vector::Vector =
+                                vector::Vector::new(&String::from("#inline-temp"), vector_elements.clone());
                             if passed_equal {
-                                rhs.push(Token::Scalar(v));
+                                rhs.push(Token::Vector(v));
                             } else {
-                                lhs.push(Token::Scalar(v));
+                                lhs.push(Token::Vector(v));
                             }
+                            reading_vector = false;
+                        } else {
+                            // parenthesis or error
                         }
-                        Err(_) => {
-                            let v = self.get().get(scope).get(&tk.to_string());
+                    },
+                    "=" => {
+                        passed_equal = true;
+                        continue;
+                    },
+                    "+" | "-" | "." | "*" | "x" => {
+                        if passed_equal {
+                            rhs.push(Token::Operator(tk.to_string()));
+                        } else {
+                            lhs.push(Token::Operator(tk.to_string()));
+                        } 
+                    },
+                    _ => {
+                        match tk.parse::<f64>() {
+                            Ok(v) => {
+                                if passed_equal {
+                                    rhs.push(Token::Scalar(v));
+                                } else {
+                                    lhs.push(Token::Scalar(v));
+                                }
+                            }
+                            Err(_) => {
+                                let v = self.get().get(scope).get(&tk.to_string());
+                            }
                         }
                     }
                 }
             }
 
-            if reading_vector {
-                let value: f64 = tk.parse().unwrap();
-                vector_elements.push(value);
+        }
+        // now calculate based on priorities
+        let rhs_tokens_count = rhs.len();
+        for  mut i in 0..rhs_tokens_count {
+            if let Token::Operator(operator) = &rhs[i] {
+                if i > 0 && i < rhs_tokens_count - 1 {
+                    match operator.as_str() {
+                        "x" => {
+                            match &rhs[i - 1] {
+                                Token::Vector(v) => {
+                                    if let Token::Vector(u) = &rhs[i + 1] {
+                                        let r = v.cross(u);
+                                        rhs[i - 1] = Token::Matrix(r);
+                                        rhs.remove(i + 1);
+                                        rhs.remove(i);
+                                        i -= 1;
+                                    }
+                                }
+                                Token::Matrix(m) => {
+
+                                }
+                                _ => {
+
+                                }
+                            }
+                        }
+                        _ => {
+                            
+                        }
+                    }
+                }
             }
         }
     }
