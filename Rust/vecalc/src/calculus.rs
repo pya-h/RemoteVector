@@ -9,6 +9,11 @@ pub enum Token {
     Null,
     Wtf(String),
 }
+
+trait MathOperations {
+    // Use this: https://chatgpt.com/share/6737beff-489c-8003-b6fe-34b207ab028e
+}
+
 pub struct Analyzer {
     memory: memory::Memory,
 }
