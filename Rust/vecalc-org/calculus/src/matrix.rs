@@ -1,4 +1,4 @@
-use crate::calculus::vector::Vector;
+use crate::vector::Vector;
 
 pub struct Matrix {
     rows: Vec<Vector>,

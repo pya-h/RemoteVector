@@ -1,6 +1,6 @@
-pub mod matrix;
-pub mod memory;
-pub mod vector;
+extern crate calculus;
+use calculus::*;
+
 pub enum Token {
     Vector(vector::Vector),
     Matrix(matrix::Matrix),

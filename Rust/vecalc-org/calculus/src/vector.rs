@@ -1,4 +1,4 @@
-use crate::calculus::matrix::Matrix;
+use crate::matrix::Matrix;
 
 #[derive(Clone)]
 pub struct Vector {
