@@ -1,31 +1,23 @@
 extern crate calculus;
 use calculus::*;
-
-pub enum Token {
-    Vector(vector::Vector),
-    Matrix(matrix::Matrix),
-    Scalar(f64),
-    Operator(String),
-    Null,
-    Wtf(String),
-}
+use calculus::memory::*;
 
 trait MathOperations {
     // Use this: https://chatgpt.com/share/6737beff-489c-8003-b6fe-34b207ab028e
 }
 
 pub struct Analyzer {
-    memory: memory::Memory,
+    memory: Memory,
 }
 
 impl Analyzer {
     pub fn init() -> Analyzer {
         Analyzer {
-            memory: memory::Memory::create(),
+            memory: Memory::create(),
         }
     }
 
-    pub fn get(&mut self) -> &mut memory::Memory {
+    pub fn get(&mut self) -> &mut Memory {
         &mut self.memory
     }
 
@@ -35,32 +27,52 @@ impl Analyzer {
         let mut lhs: Vec<Token> = Vec::new();
         let mut rhs: Vec<Token> = Vec::new();
         let mut passed_equal: bool = false;
-        let mut reading_vector: bool = false;
-        let mut vector_elements: Vec<f64> = Vec::new();
-        
+        let mut inside_sth: bool = false;
+        let mut vector_reading_cache: Vec<f64> = Vec::new();
+        let mut matrix_rading_cache: Vec<Vector> = Vec::new();
+
+        let mut parse_next = |next| {
+            if passed_equal {
+                rhs.push(next);
+            } else {
+                lhs.push(next);
+            }
+        }
         for tk in tokens {
-            if reading_vector {
-                let value: f64 = tk.parse().unwrap();
-                vector_elements.push(value);
+            if inside_sth {
+                if matrix_rading_cache.len() > 0 {
+                    // TODO: matrix calcs
+                } else if vector_reading_cache.len() > 0 {
+                    match tk.parse::<f64>() {
+                        Ok(v) => {
+                            vector_reading_cache.push(v);
+                        }
+                        Err(_) => {
+                            if let Some(v) = self.get().get(scope).get(&tk.to_string()) {
+                                vector_reading_cache.push(v);
+                            } else {
+                                // TODO: Throw error
+                            }
+                        }
+                    }
+                } else {
+
+                }
             } else {
                 match tk {
-                    "(" => {
-                        reading_vector = true;
-                        vector_elements.clear();
-                    },
                     "[" => {
-                        // TODO: extract matrix
+                        inside_sth = true;
+                        vector_reading_cache.clear();
                     },
-                    ")" => {
-                        if reading_vector && vector_elements.len() > 0 {
-                            let v: vector::Vector =
-                                vector::Vector::new(&String::from("#inline-temp"), vector_elements.clone());
-                            if passed_equal {
-                                rhs.push(Token::Vector(v));
-                            } else {
-                                lhs.push(Token::Vector(v));
+                    "]" => {
+                        if inside_sth {
+                            if matrix_rading_cache.len() > 0 {
+
                             }
-                            reading_vector = false;
+                            let v: vector::Vector =
+                                vector::Vector::new(&String::from("#inline-temp"), vector_reading_cache.clone());
+  
+                            inside_sth = false;
                         } else {
                             // parenthesis or error
                         }
@@ -70,11 +82,7 @@ impl Analyzer {
                         continue;
                     },
                     "+" | "-" | "." | "*" | "x" => {
-                        if passed_equal {
-                            rhs.push(Token::Operator(tk.to_string()));
-                        } else {
-                            lhs.push(Token::Operator(tk.to_string()));
-                        } 
+                        parse_next(Token::Operator(tk.to_string()));
                     },
                     _ => {
                         match tk.parse::<f64>() {
