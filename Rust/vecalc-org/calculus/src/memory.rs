@@ -47,7 +47,16 @@ impl Scope {
         None
     }
 
-    
+    pub fn evaluate_identifier(token: &str) -> Token {
+        if let Ok(v) = token.parse::<f64>() {
+            return Token::Scalar(v);
+        }
+        match self.get(&token.to_string()) {
+            Some(v) => v,
+            _ => Token::Null,
+        }
+    }
+
     pub fn define_vector(&mut self, name: String, vector_components: Vec<f64>) {
         self.members
             .entry(name.to_string())
