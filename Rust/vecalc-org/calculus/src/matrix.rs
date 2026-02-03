@@ -1,5 +1,6 @@
 use crate::vector::Vector;
 
+#[derive(Clone)]
 pub struct Matrix {
     rows: Vec<Vector>,
     name: String,
@@ -18,14 +19,16 @@ macro_rules! M {
 }
 
 impl Matrix {
-    pub fn new(name: &String, rows: Vec<Vector>)  -> Matrix {
-        Matrix {name: name.clone(), rows}
+    pub fn new(name: &String, rows: Vec<Vector>) -> Matrix {
+        Matrix {
+            name: name.clone(),
+            rows,
+        }
     }
 
     pub fn extend(&mut self, row: &Vector) {
         self.rows.push(row.clone());
     }
-
 
     pub fn to_string(&self) -> String {
         let mut representation: String = String::from("[");
