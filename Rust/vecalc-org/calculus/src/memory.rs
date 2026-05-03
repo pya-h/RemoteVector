@@ -13,6 +13,19 @@ pub enum Token {
     Wtf(String),
 }
 
+impl Token {
+    pub fn to_string(&self) -> String {
+        match self {
+            Token::Vector(v) => v.to_string(),
+            Token::Matrix(m) => m.to_string(),
+            Token::Null => String::from("()"),
+            Token::Scalar(s) => s.to_string(),
+            Token::Operator(s) => s.clone(),
+            Token::Wtf(s) => s.clone(),
+        }
+    }
+}
+
 pub struct Scope {
     members: HashMap<String, Token>,
     name: String,
@@ -28,6 +41,10 @@ impl Scope {
 
     pub fn get(&self, name: &String) -> Option<&Token> {
         self.members.get(name)
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
     }
 
     pub fn get_vec(&self, vector_name: &String) -> Option<&Vector> {

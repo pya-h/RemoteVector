@@ -67,7 +67,7 @@ impl Analyzer {
         let scope_memory = self.get().get(scope);
 
         for tk in tokens_as_string {
-            if inside_sth {
+            if inside_sth && tk != "]" {
                 if matrix_rading_cache.len() > 0 {
                     // TODO: matrix calcs
                 } else if vector_reading_cache.len() > 0 {
@@ -81,16 +81,17 @@ impl Analyzer {
                     let v_as_token = scope_memory.evaluate_identifier(tk);
                     match v_as_token {
                         Token::Scalar(v) => {
-                            vector_reading_cache.push(v); // starts extracting vector
+                            vector_reading_cache.push(v);
                         }
                         Token::Vector(v) => {
-                            matrix_rading_cache.push(v); // starts extracting matrix
+                            matrix_rading_cache.push(v);
                         }
                         _ => {
                             // throw error.
                         }
                     }
                 }
+                // TODO: this only support single element extracting; add scalaer math inside vecore/matrix definition...
             } else {
                 match tk {
                     "[" => {
@@ -103,17 +104,18 @@ impl Analyzer {
                         if inside_sth {
                             if matrix_rading_cache.len() > 0 {
                                 let m: Matrix = Matrix::new(
-                                    &String::from("#inline-temp"),
+                                    scope_memory.name(),
                                     matrix_rading_cache.clone(),
                                 );
                                 statement.next(Token::Matrix(m));
                                 matrix_rading_cache.clear();
                             } else if vector_reading_cache.len() > 0 {
                                 let v: Vector = Vector::new(
-                                    &String::from("#inline-temp"),
+                                    scope_memory.name(),
                                     vector_reading_cache.clone(),
                                 );
                                 statement.next(Token::Vector(v));
+                                vector_reading_cache.clear();
                             } else {
                                 // throw error: Empty vector (remember to falsify flag)
                             }
@@ -137,6 +139,8 @@ impl Analyzer {
         // now calculate based on priorities
         let rhs_tokens_count = statement.right.len();
         for mut i in 0..rhs_tokens_count {
+            println!("{:?}", statement.right[i].to_string());
+            /* 
             if let Token::Operator(operator) = &statement.right[i] {
                 if i > 0 && i < rhs_tokens_count - 1 {
                     match operator.as_str() {
@@ -156,7 +160,7 @@ impl Analyzer {
                         _ => {}
                     }
                 }
-            }
+            }*/
         }
     }
 }
