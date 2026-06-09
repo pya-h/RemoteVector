@@ -75,6 +75,10 @@ impl Scope {
         }
     }
 
+    pub fn define(&mut self, name: String, token: Token) {
+        self.members.insert(name, token);
+    }
+
     pub fn define_vector(&mut self, name: String, vector_components: Vec<f64>) {
         self.members.insert(
             name.to_string(),

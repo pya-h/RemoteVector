@@ -34,7 +34,7 @@ impl Matrix {
         let mut representation: String = String::from("[");
 
         for xi in &self.rows {
-            representation += &format!(",\n    {}", xi.as_row())
+            representation += &format!("\n    {}", xi.as_row())
         }
         representation + "\n]"
     }

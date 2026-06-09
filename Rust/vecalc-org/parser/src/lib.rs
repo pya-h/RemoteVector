@@ -44,6 +44,10 @@ impl Statement {
             self.right = std::mem::take(&mut self.left);
         }
     }
+
+    pub fn is_resolved(&self) -> bool {
+        self.right.len() == 1 && self.left.len() == 1
+    }
 }
 
 impl Analyzer {
@@ -57,7 +61,7 @@ impl Analyzer {
         &mut self.memory
     }
 
-    pub fn analyze(&mut self, instruction: &String, scope: &String) {
+    pub fn analyze(&mut self, instruction: &String, scope: &String) -> String{
         let tokens_as_string: Vec<&str> = instruction.split_whitespace().collect();
 
         let mut inside_sth: bool = false;
@@ -136,31 +140,64 @@ impl Analyzer {
             }
         }
         statement.finalize();
+        
         // now calculate based on priorities
-        let rhs_tokens_count = statement.right.len();
-        for mut i in 0..rhs_tokens_count {
-            println!("{:?}", statement.right[i].to_string());
-            /* 
-            if let Token::Operator(operator) = &statement.right[i] {
-                if i > 0 && i < rhs_tokens_count - 1 {
-                    match operator.as_str() {
-                        "x" => match &statement.right[i - 1] {
-                            Token::Vector(v) => {
-                                if let Token::Vector(u) = &statement.right[i + 1] {
-                                    let r = v.cross(u);
-                                    statement.right[i - 1] = Token::Matrix(r);
-                                    statement.right.remove(i + 1);
-                                    statement.right.remove(i);
-                                    i -= 1;
+        let mut rhs_tokens_count = statement.right.len();
+
+        let mut i = 0;
+        while i < rhs_tokens_count {
+            if let Token::Operator(op) = &statement.right[i] {
+                if i == 0 || i == rhs_tokens_count - 1{
+                    // ERROR
+                }
+                if op != "*" && op != "/" {
+                    i += 1;
+                    continue;
+                }
+                match (&statement.right[i - 1], &statement.right[i+1]) {
+                    (Token::Scalar(s1), Token::Scalar(s2)) => {
+                        statement.right[i] = match op.as_str() {
+                            "*" => Token::Scalar(s1 * s2),
+                            "/" => Token::Scalar(s1 / s2),
+                            _ => Token::Wtf(format!("Invalid Operator: {}", op))
+                        };
+                        statement.right.remove(i + 1);
+                        statement.right.remove(i - 1);
+                        i -= 1;
+                        rhs_tokens_count -= 2;
+                    }
+                    (Token::Vector(v1), Token::Vector(v2)) => {
+                        statement.right[i] = match op.as_str() {
+                            "x" | "*" => Token::Matrix(v1.cross(v2)),
+                            "." => {
+                                if let Some(product) = v1.dot(v2) {
+                                    Token::Scalar(product)
+                                } else {
+                                    Token::Wtf(format!("{} has different dimension than {}", v1.to_string(), v2.to_string()))
                                 }
                             }
-                            Token::Matrix(m) => {}
-                            _ => {}
-                        },
-                        _ => {}
+                            _ => Token::Wtf(format!("Invalid Operator: {}", op))
+                        }
+                    }
+                    _ => {
+                        // ERROR
                     }
                 }
-            }*/
+            }
+
+            i += 1
         }
+        let mut rhs_tokens_count = statement.right.len();
+        i = 0;
+        while i < rhs_tokens_count {
+            // Second priority operators ...
+            i += 1;
+        }
+
+        if !statement.is_resolved() {
+            // ERROR:
+        }
+        scope_memory.define(statement.left[0].to_string(), statement.right[0].clone());
+        statement.right[0].to_string()
     }
 }

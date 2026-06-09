@@ -7,7 +7,7 @@ fn main() {
     loop {
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).expect("Failed reading statement!");
-        app.analyze(&input, &String::from("main"));
+        println!("{}", app.analyze(&input, &String::from("main")));
     }
     main_scope.define_vector("v".to_string(), vec![1.2, 2.6, 2.3, 4.5]);
     main_scope.define_vector("u".to_string(), vec![1.0, 2.0, 2.0, 4.0]);
