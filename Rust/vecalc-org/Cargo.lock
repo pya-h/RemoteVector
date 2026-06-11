@@ -17,5 +17,6 @@ dependencies = [
 name = "vecli"
 version = "0.1.0"
 dependencies = [
+ "calculus",
  "parser",
 ]

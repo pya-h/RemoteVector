@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use super::matrix::Matrix;
 use super::vector::Vector;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Token {
     Vector(Vector),
     Matrix(Matrix),
     Scalar(f64),
     Operator(String),
+    Identifier(String),
     Null,
     Wtf(String),
 }
@@ -21,13 +22,14 @@ impl Token {
             Token::Null => String::from("()"),
             Token::Scalar(s) => s.to_string(),
             Token::Operator(s) => s.clone(),
+            Token::Identifier(s) => s.clone(),
             Token::Wtf(s) => s.clone(),
         }
     }
 }
 
 pub struct Scope {
-    members: HashMap<String, Token>,
+    pub members: HashMap<String, Token>,
     name: String,
 }
 
@@ -95,7 +97,7 @@ impl Scope {
 }
 
 pub struct Memory {
-    scopes: HashMap<String, Scope>,
+    pub scopes: HashMap<String, Scope>,
 }
 
 impl Memory {

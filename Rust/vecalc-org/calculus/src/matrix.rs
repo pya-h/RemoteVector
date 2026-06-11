@@ -1,6 +1,6 @@
 use crate::vector::Vector;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Matrix {
     rows: Vec<Vector>,
     name: String,

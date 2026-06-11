@@ -15,7 +15,7 @@ pub struct Analyzer {
 struct Statement {
     pub left: Vec<Token>,
     pub right: Vec<Token>,
-    has_equal: bool,
+    pub has_equal: bool,
 }
 
 impl Statement {
@@ -48,6 +48,14 @@ impl Statement {
     pub fn is_resolved(&self) -> bool {
         self.right.len() == 1 && self.left.len() == 1
     }
+
+    pub fn evaluate_at(&mut self, i: &mut usize, result: Token, tokens_count: &mut usize) {
+        self.right[*i] = result;
+        self.right.remove(*i + 1);
+        self.right.remove(*i - 1);
+        *tokens_count -= 2;
+        *i -= 1;
+    }
 }
 
 impl Analyzer {
@@ -61,7 +69,7 @@ impl Analyzer {
         &mut self.memory
     }
 
-    pub fn analyze(&mut self, instruction: &String, scope: &String) -> String{
+    pub fn analyze(&mut self, instruction: &String, scope: &String) -> String {
         let tokens_as_string: Vec<&str> = instruction.split_whitespace().collect();
 
         let mut inside_sth: bool = false;
@@ -107,17 +115,13 @@ impl Analyzer {
                     "]" => {
                         if inside_sth {
                             if matrix_rading_cache.len() > 0 {
-                                let m: Matrix = Matrix::new(
-                                    scope_memory.name(),
-                                    matrix_rading_cache.clone(),
-                                );
+                                let m: Matrix =
+                                    Matrix::new(scope_memory.name(), matrix_rading_cache.clone());
                                 statement.next(Token::Matrix(m));
                                 matrix_rading_cache.clear();
                             } else if vector_reading_cache.len() > 0 {
-                                let v: Vector = Vector::new(
-                                    scope_memory.name(),
-                                    vector_reading_cache.clone(),
-                                );
+                                let v: Vector =
+                                    Vector::new(scope_memory.name(), vector_reading_cache.clone());
                                 statement.next(Token::Vector(v));
                                 vector_reading_cache.clear();
                             } else {
@@ -132,52 +136,73 @@ impl Analyzer {
                         statement.equal_passed();
                         continue;
                     }
-                    "+" | "-" | "." | "*" | "x" => {
-                        statement.next(Token::Operator(tk.to_string()));
-                    }
-                    _ => statement.next(scope_memory.evaluate_identifier(tk)),
+                    "+" | "-" | "." | "*" => statement.next(Token::Operator(tk.to_string())),
+                    
+                    _ => statement.next(Token::Identifier(tk.to_string())),
                 }
             }
         }
         statement.finalize();
-        
+
         // now calculate based on priorities
         let mut rhs_tokens_count = statement.right.len();
 
         let mut i = 0;
+
         while i < rhs_tokens_count {
+            if let Token::Identifier(ident) = &statement.right[i] {
+                statement.right[i] = scope_memory.evaluate_identifier(ident);
+            }
             if let Token::Operator(op) = &statement.right[i] {
-                if i == 0 || i == rhs_tokens_count - 1{
+                if i == 0 || i == rhs_tokens_count - 1 {
                     // ERROR
                 }
-                if op != "*" && op != "/" {
+                if op != "*" && op != "/" && op != "." {
                     i += 1;
                     continue;
                 }
-                match (&statement.right[i - 1], &statement.right[i+1]) {
+                match (&statement.right[i - 1], &statement.right[i + 1]) {
                     (Token::Scalar(s1), Token::Scalar(s2)) => {
-                        statement.right[i] = match op.as_str() {
-                            "*" => Token::Scalar(s1 * s2),
-                            "/" => Token::Scalar(s1 / s2),
-                            _ => Token::Wtf(format!("Invalid Operator: {}", op))
-                        };
-                        statement.right.remove(i + 1);
-                        statement.right.remove(i - 1);
-                        i -= 1;
-                        rhs_tokens_count -= 2;
+                        statement.evaluate_at(
+                            &mut i,
+                            match op.as_str() {
+                                "*" => Token::Scalar(s1 * s2),
+                                "/" => Token::Scalar(s1 / s2),
+                                _ => Token::Wtf(format!("Invalid Operator: {}", op)),
+                            },
+                            &mut rhs_tokens_count,
+                        );
                     }
                     (Token::Vector(v1), Token::Vector(v2)) => {
-                        statement.right[i] = match op.as_str() {
-                            "x" | "*" => Token::Matrix(v1.cross(v2)),
-                            "." => {
-                                if let Some(product) = v1.dot(v2) {
-                                    Token::Scalar(product)
-                                } else {
-                                    Token::Wtf(format!("{} has different dimension than {}", v1.to_string(), v2.to_string()))
+                        statement.evaluate_at(
+                            &mut i,
+                            match op.as_str() {
+                                "*" => Token::Matrix(v1.cross(v2)),
+                                "." => {
+                                    if let Some(product) = v1.dot(v2) {
+                                        Token::Scalar(product)
+                                    } else {
+                                        Token::Wtf(format!(
+                                            "{} has different dimension than {}",
+                                            v1.to_string(),
+                                            v2.to_string()
+                                        ))
+                                    }
                                 }
-                            }
-                            _ => Token::Wtf(format!("Invalid Operator: {}", op))
-                        }
+                                _ => Token::Wtf(format!("Invalid Operator: {}", op)),
+                            },
+                            &mut rhs_tokens_count,
+                        );
+                    }
+                    (Token::Scalar(c), Token::Vector(v)) => {
+                        statement.evaluate_at(
+                            &mut i,
+                            match op.as_str() {
+                                "." | "*" => Token::Vector(v.map(*c, 0.0)),
+                                _ => Token::Wtf(format!("Invalid Operator: {}", op)),
+                            },
+                            &mut rhs_tokens_count,
+                        );
                     }
                     _ => {
                         // ERROR
@@ -197,7 +222,11 @@ impl Analyzer {
         if !statement.is_resolved() {
             // ERROR:
         }
-        scope_memory.define(statement.left[0].to_string(), statement.right[0].clone());
+        if statement.has_equal {
+            if let Token::Identifier(ident) = &statement.left[0] {
+                scope_memory.define(ident.clone(), statement.right[0].clone());
+            } 
+        }
         statement.right[0].to_string()
     }
 }
