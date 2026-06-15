@@ -6,24 +6,16 @@ pub struct Vector {
     name: String,
 }
 
-#[macro_export] macro_rules! V {
-        ($($x:expr), *) => {
-            {
-                let mut v: Vector {name: "nothing".to_string(), components: Vec::new()};
-                $(
-                    v.components.push($x);
-                )*
-                v
-            }
-        };
-}
-
 impl Vector {
     pub fn new(name: &String, v: Vec<f64>) -> Vector {
         Vector {
             components: v,
             name: name.clone(),
         }
+    }
+
+    pub fn add_component(&mut self, x: f64) {
+        self.components.push(x);
     }
 
     pub fn zero(dimension: usize) -> Vector {
