@@ -137,7 +137,7 @@ impl Analyzer {
                         continue;
                     }
                     "+" | "-" | "." | "*" => statement.next(Token::Operator(tk.to_string())),
-                    
+
                     _ => statement.next(Token::Identifier(tk.to_string())),
                 }
             }
@@ -146,13 +146,9 @@ impl Analyzer {
 
         // now calculate based on priorities
         let mut rhs_tokens_count = statement.right.len();
-
         let mut i = 0;
 
         while i < rhs_tokens_count {
-            if let Token::Identifier(ident) = &statement.right[i] {
-                statement.right[i] = scope_memory.evaluate_identifier(ident);
-            }
             if let Token::Operator(op) = &statement.right[i] {
                 if i == 0 || i == rhs_tokens_count - 1 {
                     // ERROR
@@ -161,7 +157,10 @@ impl Analyzer {
                     i += 1;
                     continue;
                 }
-                match (&statement.right[i - 1], &statement.right[i + 1]) {
+                match (
+                    scope_memory.identify(&statement.right[i - 1]),
+                    scope_memory.identify(&statement.right[i + 1]),
+                ) {
                     (Token::Scalar(s1), Token::Scalar(s2)) => {
                         statement.evaluate_at(
                             &mut i,
@@ -177,9 +176,9 @@ impl Analyzer {
                         statement.evaluate_at(
                             &mut i,
                             match op.as_str() {
-                                "*" => Token::Matrix(v1.cross(v2)),
+                                "*" => Token::Matrix(v1.cross(&v2)),
                                 "." => {
-                                    if let Some(product) = v1.dot(v2) {
+                                    if let Some(product) = v1.dot(&v2) {
                                         Token::Scalar(product)
                                     } else {
                                         Token::Wtf(format!(
@@ -198,7 +197,17 @@ impl Analyzer {
                         statement.evaluate_at(
                             &mut i,
                             match op.as_str() {
-                                "." | "*" => Token::Vector(v.map(*c, 0.0)),
+                                "." | "*" => Token::Vector(v.map(c, 0.0)),
+                                _ => Token::Wtf(format!("Invalid Operator: {}", op)),
+                            },
+                            &mut rhs_tokens_count,
+                        );
+                    }
+                    (Token::Vector(v), Token::Scalar(c)) => {
+                        statement.evaluate_at(
+                            &mut i,
+                            match op.as_str() {
+                                "." | "*" => Token::Vector(v.map(c, 0.0)),
                                 _ => Token::Wtf(format!("Invalid Operator: {}", op)),
                             },
                             &mut rhs_tokens_count,
@@ -212,21 +221,19 @@ impl Analyzer {
 
             i += 1
         }
-        let mut rhs_tokens_count = statement.right.len();
-        i = 0;
-        while i < rhs_tokens_count {
-            // Second priority operators ...
-            i += 1;
-        }
 
+        for i in 0..statement.right.len() {
+            // Second order priority...
+            statement.right[i] = scope_memory.identify(&statement.right[i]); // TEMP FOR NOW
+        }
         if !statement.is_resolved() {
             // ERROR:
         }
         if statement.has_equal {
             if let Token::Identifier(ident) = &statement.left[0] {
                 scope_memory.define(ident.clone(), statement.right[0].clone());
-            } 
+            }
         }
-        statement.right[0].to_string()
+        scope_memory.identify(&statement.right[0]).to_string()
     }
 }
