@@ -94,13 +94,6 @@ impl Scope {
             Token::Matrix(Matrix::new(&name, column_vecs)),
         );
     }
-
-    pub fn identify(&self, token: &Token) -> Token {
-        match token {
-            Token::Identifier(name) => self.evaluate_identifier(name),
-            _ => token.clone(),
-        }
-    }
 }
 
 pub struct Memory {

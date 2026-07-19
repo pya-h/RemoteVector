@@ -1,5 +1,8 @@
 extern crate calculus;
+use std::thread::scope;
+
 use calculus::matrix::Matrix;
+use calculus::memory::Token::Identifier;
 use calculus::memory::*;
 use calculus::vector::Vector;
 use calculus::*;
@@ -49,12 +52,21 @@ impl Statement {
         self.right.len() == 1 && self.left.len() == 1
     }
 
-    pub fn evaluate_at(&mut self, i: &mut usize, result: Token, tokens_count: &mut usize) {
+    pub fn merge_adjacents(&mut self, i: &mut usize, result: Token, tokens_count: &mut usize) {
         self.right[*i] = result;
         self.right.remove(*i + 1);
         self.right.remove(*i - 1);
         *tokens_count -= 2;
         *i -= 1;
+    }
+
+    pub fn at(&self, index: usize, scope: &Scope) -> Token {
+        // only will be called when index is valid
+        let token = &self.right[index];
+        if let Token::Identifier(symbol) = token {
+            return scope.evaluate_identifier(&symbol);
+        }
+        token.clone()
     }
 }
 
@@ -158,11 +170,11 @@ impl Analyzer {
                     continue;
                 }
                 match (
-                    scope_memory.identify(&statement.right[i - 1]),
-                    scope_memory.identify(&statement.right[i + 1]),
+                    statement.at(i - 1, &scope_memory),
+                    statement.at(i + 1, &scope_memory),
                 ) {
                     (Token::Scalar(s1), Token::Scalar(s2)) => {
-                        statement.evaluate_at(
+                        statement.merge_adjacents(
                             &mut i,
                             match op.as_str() {
                                 "*" => Token::Scalar(s1 * s2),
@@ -173,7 +185,7 @@ impl Analyzer {
                         );
                     }
                     (Token::Vector(v1), Token::Vector(v2)) => {
-                        statement.evaluate_at(
+                        statement.merge_adjacents(
                             &mut i,
                             match op.as_str() {
                                 "*" => Token::Matrix(v1.cross(&v2)),
@@ -194,7 +206,7 @@ impl Analyzer {
                         );
                     }
                     (Token::Scalar(c), Token::Vector(v)) => {
-                        statement.evaluate_at(
+                        statement.merge_adjacents(
                             &mut i,
                             match op.as_str() {
                                 "." | "*" => Token::Vector(v.map(c, 0.0)),
@@ -204,7 +216,7 @@ impl Analyzer {
                         );
                     }
                     (Token::Vector(v), Token::Scalar(c)) => {
-                        statement.evaluate_at(
+                        statement.merge_adjacents(
                             &mut i,
                             match op.as_str() {
                                 "." | "*" => Token::Vector(v.map(c, 0.0)),
@@ -223,17 +235,16 @@ impl Analyzer {
         }
 
         for i in 0..statement.right.len() {
-            // Second order priority...
-            statement.right[i] = scope_memory.identify(&statement.right[i]); // TEMP FOR NOW
+            // TODO: Second order priorities...
         }
         if !statement.is_resolved() {
             // ERROR:
         }
         if statement.has_equal {
             if let Token::Identifier(ident) = &statement.left[0] {
-                scope_memory.define(ident.clone(), statement.right[0].clone());
+                scope_memory.define(ident.clone(), statement.at(0, &scope_memory));
             }
         }
-        scope_memory.identify(&statement.right[0]).to_string()
+        statement.at(0, &scope_memory).to_string()
     }
 }
