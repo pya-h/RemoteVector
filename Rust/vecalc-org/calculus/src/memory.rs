@@ -26,6 +26,20 @@ impl Token {
             Token::Wtf(s) => s.clone(),
         }
     }
+
+    pub fn is_valid_term(&self) -> bool {
+        match self {
+            Token::Wtf(_) | Token::Operator(_) => false,
+            _ => true,
+        }
+    }
+
+    pub fn is_operator(&self) -> bool {
+        match self {
+            Token::Operator(_) => true,
+            _ => false,
+        }
+    }
 }
 
 pub struct Scope {

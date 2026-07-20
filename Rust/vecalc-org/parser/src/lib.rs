@@ -1,15 +1,11 @@
 extern crate calculus;
-use std::thread::scope;
-
 use calculus::matrix::Matrix;
-use calculus::memory::Token::Identifier;
 use calculus::memory::*;
 use calculus::vector::Vector;
-use calculus::*;
-
+/* TODO: maybe overloading may help?
 trait MathOperations {
     // Use this: https://chatgpt.com/share/6737beff-489c-8003-b6fe-34b207ab028e
-}
+}*/
 
 pub struct Analyzer {
     memory: Memory,
@@ -46,10 +42,6 @@ impl Statement {
         if !self.has_equal {
             self.right = std::mem::take(&mut self.left);
         }
-    }
-
-    pub fn is_resolved(&self) -> bool {
-        self.right.len() == 1 && self.left.len() == 1
     }
 
     pub fn merge_adjacents(&mut self, i: &mut usize, result: Token, tokens_count: &mut usize) {
@@ -265,18 +257,70 @@ impl Analyzer {
 
             i += 1
         }
-        let mut result = statement.at(0, scope_memory);
-        for i in 1..statement.right.len() {
-            // TODO: Second order priorities...
-        }
-        if !statement.is_resolved() {
-            // ERROR:
-        }
-        if statement.has_equal {
-            if let Token::Identifier(ident) = &statement.left[0] {
-                scope_memory.define(ident.clone(), statement.at(0, &scope_memory));
+        let end_index = statement.right.len() - 1;
+        i = 0;
+        let mut result = if !&statement.right[end_index].is_valid_term() {
+            let last_term = &statement.right[end_index];
+            if last_term.is_operator() {
+                Token::Wtf(String::from("Expressions can not end with an operator!"))
+            } else {
+                last_term.clone() // its a what the fuck itself
+            }
+        } else {
+            statement.at(0, scope_memory)
+        };
+
+        while result.is_valid_term() && {
+            i += 1;
+            i
+        } < end_index
+        {
+            if let Token::Operator(operator) = &statement.right[i] {
+                let operator = operator.as_str();
+                if operator != "+" && operator != "-" {
+                    result = Token::Wtf(String::from(format!(
+                        "Invalid operator in middle of expression: {}",
+                        operator
+                    )));
+                    break;
+                }
+                result = match (result, statement.at(i + 1, &scope_memory)) {
+                    (Token::Scalar(c1), Token::Scalar(c2)) => {
+                        Token::Scalar(match operator {
+                            "+" => c1 + c2,
+                            "-" => c1 - c2,
+                            _ => 0.0, // wont happen
+                        })
+                    }
+                    (Token::Vector(v1), Token::Vector(v2)) => {
+                        if let Some(result) =
+                            v1.plus_cv(&v2, if operator == "-" { -1.0 } else { 1.0 })
+                        {
+                            Token::Vector(result)
+                        } else {
+                            Token::Wtf(String::from(
+                                "Can not add or substract vectors with different dimensions!",
+                            ))
+                        }
+                    }
+                    (Token::Matrix(m1), Token::Matrix(_m2)) => {
+                        Token::Matrix(Matrix::zeros(m1.rows_count()))
+                    }
+                    _ => {
+                        // ERROR
+                        // TODO: Also handle: x + - + y  or   v1 + -v2   or cases like that
+                        Token::Wtf(String::from("Unknwon"))
+                    }
+                };
             }
         }
-        statement.at(0, &scope_memory).to_string()
+
+        if result.is_valid_term() && statement.has_equal {
+            if let Token::Identifier(ident) = &statement.left[0] {
+                scope_memory.define(ident.clone(), result.clone());
+            }
+            // TODO: Multiple elements in left such as a, b = ...
+        }
+        result.to_string()
     }
 }
