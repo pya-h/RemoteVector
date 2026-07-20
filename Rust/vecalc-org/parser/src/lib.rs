@@ -200,6 +200,21 @@ impl Analyzer {
                                         ))
                                     }
                                 }
+                                "/" => {
+                                    if let Some(v2_inverse) = v2.scalar_inverse() {
+                                        if let Some(scalar_div) = v1.multiply(&v2_inverse) {
+                                            Token::Vector(scalar_div)
+                                        } else {
+                                            Token::Wtf(String::from(
+                                                "Possibiliy mismatched vectors on division sides!",
+                                            ))
+                                        }
+                                    } else {
+                                        Token::Wtf(String::from(
+                                            "Can not devide on a vector containing zeros!",
+                                        ))
+                                    }
+                                }
                                 _ => Token::Wtf(format!("Invalid Operator: {}", op)),
                             },
                             &mut rhs_tokens_count,
@@ -210,6 +225,15 @@ impl Analyzer {
                             &mut i,
                             match op.as_str() {
                                 "." | "*" => Token::Vector(v.map(c, 0.0)),
+                                "/" => {
+                                    if let Some(v_inv) = v.scalar_inverse() {
+                                        Token::Vector(v_inv.map(c, 0.0))
+                                    } else {
+                                        Token::Wtf(String::from(
+                                            "Can not devide on a vector containing zeros!",
+                                        ))
+                                    }
+                                }
                                 _ => Token::Wtf(format!("Invalid Operator: {}", op)),
                             },
                             &mut rhs_tokens_count,
@@ -220,12 +244,20 @@ impl Analyzer {
                             &mut i,
                             match op.as_str() {
                                 "." | "*" => Token::Vector(v.map(c, 0.0)),
+                                "/" => {
+                                    if c != 0.0_f64 {
+                                        Token::Wtf(String::from("Division By Zero Idiot!"))
+                                    } else {
+                                        Token::Vector(v.map(1_f64 / c, 0.0))
+                                    }
+                                }
                                 _ => Token::Wtf(format!("Invalid Operator: {}", op)),
                             },
                             &mut rhs_tokens_count,
                         );
                     }
                     _ => {
+                        // TODO: Matrix cases
                         // ERROR
                     }
                 }
@@ -233,8 +265,8 @@ impl Analyzer {
 
             i += 1
         }
-
-        for i in 0..statement.right.len() {
+        let mut result = statement.at(0, scope_memory);
+        for i in 1..statement.right.len() {
             // TODO: Second order priorities...
         }
         if !statement.is_resolved() {

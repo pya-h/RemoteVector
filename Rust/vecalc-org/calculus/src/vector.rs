@@ -6,7 +6,8 @@ pub struct Vector {
     name: String,
 }
 
-#[macro_export] macro_rules! V {
+#[macro_export]
+macro_rules! V {
         ($($x:expr), *) => {
             {
                 let mut v: Vector {name: "nothing".to_string(), components: Vec::new()};
@@ -104,7 +105,7 @@ impl Vector {
         for i in 0..n {
             u.components[i] = self.components[i] * v.components[i];
         }
-        u.name = format!("{} * 1{}", self.name, v.name);
+        u.name = format!("{} * {}", self.name, v.name);
         Some(u)
     }
 
@@ -117,6 +118,25 @@ impl Vector {
         outer_product
     }
 
+    pub fn scalar_inverse(&self) -> Option<Vector> {
+        let mut has_zeros = false;
+        let componenets = self
+            .components
+            .iter()
+            .map(|c| {
+                if *c == 0.0_f64 {
+                    has_zeros = true;
+                    0.0_f64
+                } else {
+                    1_f64 / c
+                }
+            })
+            .collect();
+        if has_zeros {
+            return None;
+        }
+        Some(Vector::new(&format!("inv({})", self.name), componenets))
+    }
     pub fn map(&self, multiply_by: f64, increment_by: f64) -> Vector {
         let mut u: Vector = Vector::zero(self.components.len());
         u.name = format!(
