@@ -75,7 +75,7 @@ impl Analyzer {
 
     pub fn analyze(&mut self, instruction: &String, scope: &String) -> String {
         let tokens_as_string: Vec<&str> = instruction.split_whitespace().collect();
-
+        // TODO: Maybe use Regex here? User doesn't have to use spaces anymore.
         let mut inside_sth: bool = false;
         let mut vector_reading_cache: Vec<f64> = Vec::new();
         let mut matrix_rading_cache: Vec<Vector> = Vec::new();
@@ -140,7 +140,7 @@ impl Analyzer {
                         statement.equal_passed();
                         continue;
                     }
-                    "+" | "-" | "." | "*" => statement.next(Token::Operator(tk.to_string())),
+                    "+" | "-" | "." | "*" | "/" => statement.next(Token::Operator(tk.to_string())),
 
                     _ => statement.next(Token::Identifier(tk.to_string())),
                 }
@@ -237,7 +237,7 @@ impl Analyzer {
                             match op.as_str() {
                                 "." | "*" => Token::Vector(v.map(c, 0.0)),
                                 "/" => {
-                                    if c != 0.0_f64 {
+                                    if c == 0.0_f64 {
                                         Token::Wtf(String::from("Division By Zero Idiot!"))
                                     } else {
                                         Token::Vector(v.map(1_f64 / c, 0.0))
